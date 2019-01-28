@@ -108,6 +108,15 @@ class GameScene: SKScene {
     
     func gameOver() {
         print("Game Over !")
+        
+        UserDefaults.standard.set(score, forKey: "RecentScore")
+        
+        if score > UserDefaults.standard.integer(forKey: "HighScore"){
+            UserDefaults.standard.set(score, forKey: "HighScore")
+        }
+        
+        let gameoverScene = GameoverScene(size: view!.bounds.size)
+        view!.presentScene(gameoverScene)
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
