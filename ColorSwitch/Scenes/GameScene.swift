@@ -31,6 +31,10 @@ class GameScene: SKScene {
     var switchState = SwitchState.pink
     var currentColorIndex: Int?
     
+    let scoreLabel = SKLabelNode (text: "0")
+    var score = 0
+    
+    
     override func sceneDidLoad() {
 
     }
@@ -46,17 +50,25 @@ class GameScene: SKScene {
     }
     
     func layoutScene() {
-        backgroundColor = UIColor(red: 39/255 , green: 39/255, blue: 39/255, alpha: 1.0)
+        backgroundColor = UIColor(red: 44/255 , green: 62/255, blue: 80/255, alpha: 1.0)
         colorSwitch = SKSpriteNode(imageNamed: "ColorSwitch1")
         colorSwitch.size = CGSize(width: frame.size.width/3, height: frame.size.width/3)
         colorSwitch.position = CGPoint(x: frame.midX, y: frame.minY + colorSwitch.size.height)
-        
+        colorSwitch.zPosition = ZPositions.colorswitch
         //colorSwitch Physics
         colorSwitch.physicsBody = SKPhysicsBody(circleOfRadius: colorSwitch.size.width/2)
         colorSwitch.physicsBody?.categoryBitMask = PhysicsCategories.switchCategory
         colorSwitch.physicsBody?.isDynamic = false //disable gravity
         
         addChild(colorSwitch)
+        
+        scoreLabel.fontName = "Calibri"
+        scoreLabel.fontSize = 30.0
+        scoreLabel.fontColor = UIColor.white
+        scoreLabel.position = CGPoint(x: frame.minX + scoreLabel.fontSize , y: frame.maxY - scoreLabel.fontSize*2)
+        scoreLabel.zPosition = ZPositions.label
+        addChild(scoreLabel)
+        
         spawnBall()
     }
     
@@ -68,7 +80,7 @@ class GameScene: SKScene {
         ball.colorBlendFactor = 1.0 //It make sure color applied to the object
         ball.name="Ball"
         ball.position = CGPoint(x: frame.midX, y: frame.maxY - ball.size.height*2)
-        
+        ball.zPosition = ZPositions.ball
         //ball Physics
         ball.physicsBody = SKPhysicsBody(circleOfRadius: ball.size.width/2)
         ball.physicsBody?.categoryBitMask = PhysicsCategories.ballCategory
@@ -86,6 +98,11 @@ class GameScene: SKScene {
         }
         
         colorSwitch.run(SKAction.rotate(byAngle: .pi/2, duration: 0.25))
+    }
+    
+    func increaseScore() {
+        score += 1
+        scoreLabel.text = "\(score)"
     }
     
     
@@ -109,7 +126,7 @@ extension GameScene: SKPhysicsContactDelegate {
         if (contactMask == PhysicsCategories.ballCategory | PhysicsCategories.switchCategory){
             if let ball = contact.bodyA.node?.name == "Ball" ? contact.bodyA.node as? SKSpriteNode : contact.bodyB.node as? SKSpriteNode {
                 if currentColorIndex == switchState.rawValue{
-                    print("Correct !")
+                    increaseScore()
                     ball.run(SKAction.fadeOut(withDuration: 0.25), completion: {
                         ball.removeFromParent()
                         self.spawnBall()
