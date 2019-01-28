@@ -18,7 +18,13 @@ class GameScene: SKScene {
     }
     
     override func didMove(to view: SKView) {
+        setupPhysics() //Set physics environment like gravity etc.
         layoutScene()
+    }
+    
+    func setupPhysics(){
+        physicsWorld.gravity = CGVector(dx: 0.0, dy: -2.0) //default (dx: 0.0, dy: -9.8)
+        physicsWorld.contactDelegate = self
     }
     
     func layoutScene() {
@@ -30,6 +36,7 @@ class GameScene: SKScene {
         //colorSwitch Physics
         colorSwitch.physicsBody = SKPhysicsBody(circleOfRadius: colorSwitch.size.width/2)
         colorSwitch.physicsBody?.categoryBitMask = PhysicsCategories.switchCategory
+        colorSwitch.physicsBody?.isDynamic = false //disable gravity
         
         addChild(colorSwitch)
         spawnBall()
@@ -47,6 +54,20 @@ class GameScene: SKScene {
         ball.physicsBody?.collisionBitMask = PhysicsCategories.none
         
         addChild(ball)
+    }
+}
+
+extension GameScene: SKPhysicsContactDelegate {
+    
+    func didBegin(_ contact: SKPhysicsContact) {
+        //01 - Ball and 10 - ColorSwitch
+        //Both Combine would be 11. THis way if we have multipal objects in the scene, we can generate unique contactMask.
+        let contactMask = contact.bodyA.categoryBitMask | contact.bodyB.categoryBitMask
+        
+        //Detect contact between ball and colorswitch
+        if (contactMask == PhysicsCategories.ballCategory | PhysicsCategories.switchCategory){
+            print("C0ntact !")
+        }
     }
 }
     
