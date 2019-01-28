@@ -9,9 +9,27 @@
 import SpriteKit
 import GameplayKit
 
+enum PlayColors{
+    static let colors = [
+        UIColor(red: 255/255, green: 0/255, blue: 128/255, alpha: 1.0), //Pink
+        UIColor(red: 53/255, green: 226/255, blue: 242/255, alpha: 1.0), //Blue
+        UIColor(red: 245/255, green: 223/255, blue: 15/255, alpha: 1.0), //Yellow
+        UIColor(red: 141/255, green: 19/255, blue: 252/255, alpha: 1.0) //Purple
+        
+        
+       
+    ]
+}
+
+enum SwitchState: Int {
+    case pink,blue,yellow,purple
+}
+
 class GameScene: SKScene {
     
     var colorSwitch: SKSpriteNode!
+    var switchState = SwitchState.pink
+    var currentColorIndex: Int?
     
     override func sceneDidLoad() {
 
@@ -29,7 +47,7 @@ class GameScene: SKScene {
     
     func layoutScene() {
         backgroundColor = UIColor(red: 39/255 , green: 39/255, blue: 39/255, alpha: 1.0)
-        colorSwitch = SKSpriteNode(imageNamed: "ColorSwitch")
+        colorSwitch = SKSpriteNode(imageNamed: "ColorSwitch1")
         colorSwitch.size = CGSize(width: frame.size.width/3, height: frame.size.width/3)
         colorSwitch.position = CGPoint(x: frame.midX, y: frame.minY + colorSwitch.size.height)
         
@@ -43,8 +61,12 @@ class GameScene: SKScene {
     }
     
     func spawnBall() {
-        let ball = SKSpriteNode(imageNamed: "ball")
-        ball.size = CGSize(width: 30.0, height: 30.0)
+        
+       currentColorIndex = Int(arc4random_uniform(UInt32(4)))
+        
+        let ball = SKSpriteNode(texture: SKTexture(imageNamed: "ball"), color: PlayColors.colors[currentColorIndex!], size: CGSize(width: 30.0, height: 30.0))
+        ball.colorBlendFactor = 1.0 //It make sure color applied to the object
+        ball.name="Ball"
         ball.position = CGPoint(x: frame.midX, y: frame.maxY - ball.size.height*2)
         
         //ball Physics
@@ -54,6 +76,25 @@ class GameScene: SKScene {
         ball.physicsBody?.collisionBitMask = PhysicsCategories.none
         
         addChild(ball)
+    }
+    
+    func turnCircle() {
+        if let newState = SwitchState(rawValue: switchState.rawValue + 1){
+            switchState = newState
+        } else {
+            switchState = .pink
+        }
+        
+        colorSwitch.run(SKAction.rotate(byAngle: .pi/2, duration: 0.25))
+    }
+    
+    
+    func gameOver() {
+        print("Game Over !")
+    }
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        turnCircle()
     }
 }
 
@@ -66,7 +107,18 @@ extension GameScene: SKPhysicsContactDelegate {
         
         //Detect contact between ball and colorswitch
         if (contactMask == PhysicsCategories.ballCategory | PhysicsCategories.switchCategory){
-            print("C0ntact !")
+            if let ball = contact.bodyA.node?.name == "Ball" ? contact.bodyA.node as? SKSpriteNode : contact.bodyB.node as? SKSpriteNode {
+                if currentColorIndex == switchState.rawValue{
+                    print("Correct !")
+                    ball.run(SKAction.fadeOut(withDuration: 0.25), completion: {
+                        ball.removeFromParent()
+                        self.spawnBall()
+                    })
+                } else {
+                    gameOver()
+                    self.spawnBall()
+                }
+            }
         }
     }
 }
